@@ -23,10 +23,11 @@ fn main() {
     bst.insert(19);
     println!("BST: {:?}", bst);
 
+    println!("***********************************************");
     println!("BST contains 15: {}", bst.contains(15));
     println!("BST contains 1968: {}", bst.contains(1968));
-
     println!("***********************************************");
+
     println!("BST: {:?}", bst);
     println!("***********************************************");
     bst.delete(15);
@@ -47,6 +48,11 @@ fn main() {
     bst.delete(19);
     println!("BST: {:?}", bst);
     println!("***********************************************");
+
+    let iter = bst.into_iter();
+    println!("{:?}", iter.collect::<Vec<i32>>());
+
+    /*
     bst.delete(18);
     println!("BST: {:?}", bst);
     println!("***********************************************");
@@ -59,15 +65,5 @@ fn main() {
     bst.delete(13);
     println!("BST: {:?}", bst);
     println!("***********************************************");
-
-    let mut bst: BST<f32> = BST::new();
-    println!("BST: {:?}", bst);
-    bst.insert(13.2);
-    println!("BST: {:?}", bst);
-    bst.insert(5.1);
-    println!("BST: {:?}", bst);
-    bst.insert(3.9);
-    println!("BST: {:?}", bst);
-    bst.insert(9.6);
-    println!("BST: {:?}", bst);
+    */
 }

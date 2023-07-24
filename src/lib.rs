@@ -1,6 +1,47 @@
 use std::mem;
 
 
+pub struct BSTIntoIter<T: PartialOrd + PartialEq> {
+    stack: Vec<Box<Node<T>>>,
+}
+
+impl<T: PartialOrd + PartialEq> BSTIntoIter<T> {
+    fn new(bst: BST<T>) -> BSTIntoIter<T> {
+        let mut stack = Vec::new();
+        if let Some(root) = bst.root {
+            stack.push(root);
+        }
+        BSTIntoIter { stack }
+    }
+}
+
+impl<T: PartialOrd + PartialEq> Iterator for BSTIntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<T> {
+        while !self.stack.is_empty() {
+            while let Some(mut node) = self.stack.pop() {
+                match node.left.take() {
+                    Some(left) => {
+                        self.stack.push(node);
+                        self.stack.push(left);
+                    },
+                    None => {
+                        match node.right.take() {
+                            Some(right) => {
+                                self.stack.push(right);
+                            },
+                            None => {},
+                        };
+                        return Some(node.value);
+                    },
+                }
+            }
+        }
+        None
+    }
+}
+
+
 #[derive(Debug, PartialEq)]
 pub struct BST<T: PartialOrd + PartialEq> {
     root: Option<Box<Node<T>>>,
@@ -29,6 +70,9 @@ impl<T: PartialOrd + PartialEq> BST<T> {
                 root.delete(value)
             }
         }
+    }
+    pub fn into_iter(self) -> BSTIntoIter<T> {
+        BSTIntoIter::new(self)
     }
 }
 
