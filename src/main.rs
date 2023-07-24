@@ -49,10 +49,16 @@ fn main() {
     println!("BST: {:?}", bst);
     println!("***********************************************");
 
-    let iter = bst.into_iter();
-    println!("{:?}", iter.collect::<Vec<i32>>());
+    for item in &bst {
+        println!("{:?}", item);
+    }
+    println!("***********************************************");
+    for item in bst.iter() {
+        println!("{:?}", item);
+    }
+    println!("***********************************************");
+    println!("BST: {:?}", bst);
 
-    /*
     bst.delete(18);
     println!("BST: {:?}", bst);
     println!("***********************************************");
@@ -65,5 +71,42 @@ fn main() {
     bst.delete(13);
     println!("BST: {:?}", bst);
     println!("***********************************************");
-    */
+
+    for item in &bst {
+        println!("{:?}", item);
+    }
+
+    bst.insert(1313);
+    println!("BST: {:?}", bst);
+
+    for item in &bst {
+        println!("{:?}", item);
+    }
+
+    for item in bst {
+        println!("{:?}", item);
+    }
+
+    // println!("BST: {:?}", bst);  // compiler would correctly scream
+
+    let mut bst: BST<&str> = BST::new();
+    bst.insert("bbb");
+    bst.insert("aaa");
+    bst.insert("ccc");
+
+    println!("BST: {:?}", bst);
+    println!("***********************************************");
+    for item in &bst {
+        println!("{:?}", item);
+    }
+    println!("***********************************************");
+    for item in bst.iter() {
+        println!("{:?}", item);
+    }
+    println!("***********************************************");
+    println!("BST: {:?}", bst);
+    println!("***********************************************");
+    for item in bst {
+        println!("{:?}", item);
+    }
 }

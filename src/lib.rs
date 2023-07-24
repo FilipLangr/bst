@@ -10,20 +10,53 @@ impl<'a, T: PartialOrd + PartialEq> IntoIterator for &'a BST<T> {
     }
 }
 
+struct StackRefMember<'a, T: PartialOrd + PartialEq> {
+    node: &'a Box<Node<T>>,
+    visited: bool,
+}
+
 pub struct BSTRefIter<'a, T: PartialOrd + PartialEq> {
-    stack: Vec<&'a Box<Node<T>>>,
+    stack: Vec<StackRefMember<'a, T>>,
 }
 
 impl <'a, T: PartialOrd + PartialEq> BSTRefIter<'a, T> {
     fn new(bst: &BST<T>) -> BSTRefIter<T> {
-        todo!();
+        let mut stack = Vec::new();
+        match &bst.root {
+            None => {},
+            Some(root) => stack.push(StackRefMember { node: root, visited: false }),
+        };
+        BSTRefIter{ stack }
     }
 }
 
 impl<'a, T: PartialOrd + PartialEq> Iterator for BSTRefIter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
-        todo!();
+        while let Some(mut stack_member) = self.stack.pop() {
+            match stack_member.visited {
+                true => {
+                    return Some(&stack_member.node.value);
+                },
+                false => {
+                    stack_member.visited = true;
+                    match &stack_member.node.right {
+                        Some(right) => {
+                            self.stack.push(StackRefMember{ node: right, visited: false} );
+                        },
+                        None => {},
+                    };
+                    self.stack.push(stack_member );
+                    match &self.stack.last().unwrap().node.left {
+                        Some(left) => {
+                            self.stack.push(StackRefMember{ node: left, visited: false} );
+                        },
+                        None => {},
+                    };
+                },
+            }
+        }
+        None
     }
 }
 
@@ -53,23 +86,21 @@ impl<T: PartialOrd + PartialEq> BSTConsumingIter<T> {
 impl<T: PartialOrd + PartialEq> Iterator for BSTConsumingIter<T> {
     type Item = T;
     fn next(&mut self) -> Option<T> {
-        while !self.stack.is_empty() {
-            while let Some(mut node) = self.stack.pop() {
-                match node.left.take() {
-                    Some(left) => {
-                        self.stack.push(node);
-                        self.stack.push(left);
-                    },
-                    None => {
-                        match node.right.take() {
-                            Some(right) => {
-                                self.stack.push(right);
-                            },
-                            None => {},
-                        };
-                        return Some(node.value);
-                    },
-                }
+        while let Some(mut node) = self.stack.pop() {
+            match node.left.take() {
+                Some(left) => {
+                    self.stack.push(node);
+                    self.stack.push(left);
+                },
+                None => {
+                    match node.right.take() {
+                        Some(right) => {
+                            self.stack.push(right);
+                        },
+                        None => {},
+                    };
+                    return Some(node.value);
+                },
             }
         }
         None
@@ -104,6 +135,9 @@ impl<T: PartialOrd + PartialEq> BST<T> {
                 root.delete(value)
             }
         }
+    }
+    pub fn iter(&self) -> BSTRefIter<T> {
+        self.into_iter()
     }
 }
 
@@ -198,8 +232,8 @@ impl<T: PartialOrd + PartialEq> Node<T> {
     }
 }
 
+// TODO into_iter on &mut (+ convenient iter_mut() method)
 // TODO tests
-// TODO iterators
 
 #[cfg(test)]
 mod tests {
