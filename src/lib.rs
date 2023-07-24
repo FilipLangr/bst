@@ -1,21 +1,56 @@
 use std::mem;
 
 
-pub struct BSTIntoIter<T: PartialOrd + PartialEq> {
+impl<'a, T: PartialOrd + PartialEq> IntoIterator for &'a BST<T> {
+    type Item = &'a T;
+    type IntoIter = BSTRefIter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BSTRefIter::new(self)
+    }
+}
+
+pub struct BSTRefIter<'a, T: PartialOrd + PartialEq> {
+    stack: Vec<&'a Box<Node<T>>>,
+}
+
+impl <'a, T: PartialOrd + PartialEq> BSTRefIter<'a, T> {
+    fn new(bst: &BST<T>) -> BSTRefIter<T> {
+        todo!();
+    }
+}
+
+impl<'a, T: PartialOrd + PartialEq> Iterator for BSTRefIter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<&'a T> {
+        todo!();
+    }
+}
+
+impl<T: PartialOrd + PartialEq> IntoIterator for BST<T> {
+    type Item = T;
+    type IntoIter = BSTConsumingIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BSTConsumingIter::new(self)
+    }
+}
+
+pub struct BSTConsumingIter<T: PartialOrd + PartialEq> {
     stack: Vec<Box<Node<T>>>,
 }
 
-impl<T: PartialOrd + PartialEq> BSTIntoIter<T> {
-    fn new(bst: BST<T>) -> BSTIntoIter<T> {
+impl<T: PartialOrd + PartialEq> BSTConsumingIter<T> {
+    fn new(bst: BST<T>) -> BSTConsumingIter<T> {
         let mut stack = Vec::new();
         if let Some(root) = bst.root {
             stack.push(root);
         }
-        BSTIntoIter { stack }
+        BSTConsumingIter { stack }
     }
 }
 
-impl<T: PartialOrd + PartialEq> Iterator for BSTIntoIter<T> {
+impl<T: PartialOrd + PartialEq> Iterator for BSTConsumingIter<T> {
     type Item = T;
     fn next(&mut self) -> Option<T> {
         while !self.stack.is_empty() {
@@ -40,7 +75,6 @@ impl<T: PartialOrd + PartialEq> Iterator for BSTIntoIter<T> {
         None
     }
 }
-
 
 #[derive(Debug, PartialEq)]
 pub struct BST<T: PartialOrd + PartialEq> {
@@ -70,9 +104,6 @@ impl<T: PartialOrd + PartialEq> BST<T> {
                 root.delete(value)
             }
         }
-    }
-    pub fn into_iter(self) -> BSTIntoIter<T> {
-        BSTIntoIter::new(self)
     }
 }
 
