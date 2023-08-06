@@ -59,74 +59,6 @@ impl<'a, T: PartialOrd + PartialEq> Iterator for BSTRefIter<'a, T> {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-impl<'a, T: PartialOrd + PartialEq> IntoIterator for &'a mut BST<T> {
-    type Item = &'a mut T;
-    type IntoIter = BSTRefMutIter<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        BSTRefMutIter::new(self)
-    }
-}
-
-struct StackRefMutMember<'a, T: PartialOrd + PartialEq> {
-    node: &'a mut Box<Node<T>>,
-    visited: bool,
-}
-
-pub struct BSTRefMutIter<'a, T: PartialOrd + PartialEq> {
-    stack: Vec<StackRefMutMember<'a, T>>,
-}
-
-impl <'a, T: PartialOrd + PartialEq> BSTRefMutIter<'a, T> {
-    fn new(bst: &mut BST<T>) -> BSTRefMutIter<T> {
-        let mut stack = Vec::new();
-        match &mut bst.root {
-            None => {},
-            Some(root) => stack.push(StackRefMutMember { node: root, visited: false }),
-        };
-        BSTRefMutIter{ stack }
-    }
-}
-
-impl<'a, T: PartialOrd + PartialEq> Iterator for BSTRefMutIter<'a, T> {
-    type Item = &'a mut T;
-    fn next(&mut self) -> Option<&'a mut T> {
-        while let Some(mut stack_member) = self.stack.pop() {
-            match stack_member.visited {
-                true => {
-                    return Some(&mut stack_member.node.value);
-                },
-                false => {
-                    stack_member.visited = true;
-                    match &mut stack_member.node.right {
-                        Some(right) => {
-                            self.stack.push(StackRefMutMember{ node: right, visited: false} );
-                        },
-                        None => {},
-                    };
-                    self.stack.push(stack_member);
-                    //match &mut self.stack.last_mut().unwrap().node.left {
-                    match &mut stack_member.node.left {
-                        Some(left) => {
-                            self.stack.push(StackRefMutMember{ node: left, visited: false} );
-                        },
-                        None => {},
-                    };
-                },
-            }
-        }
-        None
-    }
-}
-*/
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 impl<T: PartialOrd + PartialEq> IntoIterator for BST<T> {
     type Item = T;
     type IntoIter = BSTConsumingIter<T>;
@@ -299,7 +231,6 @@ impl<T: PartialOrd + PartialEq> Node<T> {
     }
 }
 
-// TODO into_iter on &mut (+ convenient iter_mut() method)
 // TODO tests
 
 #[cfg(test)]
