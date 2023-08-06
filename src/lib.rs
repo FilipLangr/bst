@@ -231,8 +231,6 @@ impl<T: PartialOrd + PartialEq> Node<T> {
     }
 }
 
-// TODO tests
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -251,5 +249,150 @@ mod tests {
         assert_eq!(bst, BST { root: Some(Box::new(Node { value: 10, left: None, right: None })) });
         assert_ne!(bst, BST { root: Some(Box::new(Node { value: 11, left: None, right: None })) });
         assert_ne!(bst, BST { root: Some(Box::new(Node { value: 11, left: Some(Box::new(Node { value: 10, left: None, right: None })), right: None })) });
+    }
+
+    #[test]
+    fn insert() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(10);
+        bst.insert(5);
+        bst.insert(15);
+        bst.insert(12);
+        bst.insert(18);
+        bst.insert(11);
+        bst.insert(13);
+        bst.insert(17);
+        bst.insert(19);
+        bst.insert(15);
+        bst.insert(12);
+        bst.insert(10);
+        assert_eq!(
+            bst,
+            BST {
+                root: Some(Box::new(Node {
+                    value: 10,
+                    left: Some(Box::new(Node { value: 5, left: None, right: None })),
+                    right: Some(Box::new(Node {
+                        value: 15,
+                        left: Some(Box::new(Node {
+                            value: 12,
+                            left: Some(Box::new(Node {
+                                value: 11,
+                                left: None,
+                                right:
+                                None,
+                            })),
+                            right: Some(Box::new(Node { value: 13, left: None, right: None })),
+                        })),
+                        right: Some(Box::new(Node { value: 18, left: Some(Box::new(Node { value: 17, left: None, right: None })), right: Some(Box::new(Node { value: 19, left: None, right: None })) })),
+                    })),
+                }))
+            }
+        );
+    }
+
+    #[test]
+    fn delete() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(10);
+        bst.insert(5);
+        bst.insert(15);
+        bst.insert(12);
+        bst.insert(18);
+        bst.insert(11);
+        bst.insert(13);
+        bst.insert(17);
+        bst.insert(19);
+
+        bst.delete(10);
+        bst.delete(11);
+        bst.delete(5);
+        bst.delete(18);
+        assert_eq!(
+            bst,
+            BST {
+                root: Some(Box::new(Node {
+                    value: 12,
+                    left: None,
+                    right: Some(Box::new(Node {
+                        value: 15,
+                        left: Some(Box::new(Node {
+                            value: 13,
+                            left: None,
+                            right: None,
+                        })),
+                        right: Some(Box::new(Node {
+                            value: 19,
+                            left: Some(Box::new(Node {
+                                value: 17,
+                                left: None,
+                                right: None,
+                            })),
+                            right: None,
+                        })),
+                    })),
+                }))
+            }
+        );
+
+        bst.delete(12);
+        bst.delete(15);
+        bst.delete(19);
+        bst.delete(17);
+        bst.delete(13);
+        assert_eq!(bst, BST { root: None });
+    }
+
+    #[test]
+    fn contains() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(10);
+        bst.insert(5);
+        bst.insert(10);
+        bst.insert(7);
+
+        assert!(bst.contains(10));
+        assert!(bst.contains(5));
+        assert!(bst.contains(7));
+        assert!(!bst.contains(1313));
+
+        bst.delete(10);
+        bst.delete(7);
+        bst.delete(1313);
+
+        assert!(!bst.contains(10));
+        assert!(bst.contains(5));
+        assert!(!bst.contains(7));
+        assert!(!bst.contains(1313));
+        assert!(!bst.contains(1414));
+    }
+
+    #[test]
+    fn iter() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(10);
+        bst.insert(5);
+        bst.insert(15);
+        bst.insert(12);
+        bst.insert(18);
+        bst.insert(11);
+        bst.insert(13);
+        bst.insert(17);
+        bst.insert(19);
+        bst.insert(15);
+        bst.insert(12);
+        bst.insert(10);
+
+        let sorted_values: Vec<i32> = vec![5, 10, 11, 12, 13, 15, 17, 18, 19];
+        assert_eq!(sorted_values, (&bst).into_iter().map(|v| *v).collect::<Vec<i32>>());
+
+        bst.delete(10);
+        let sorted_values: Vec<i32> = vec![5, 11, 12, 13, 15, 17, 18, 19];
+        assert_eq!(sorted_values, (&bst).into_iter().map(|v| *v).collect::<Vec<i32>>());
+
+        bst.insert(14);
+        let sorted_values: Vec<i32> = vec![5, 11, 12, 13, 14, 15, 17, 18, 19];
+        assert_eq!(sorted_values, (&bst).into_iter().map(|v| *v).collect::<Vec<i32>>());
+        assert_eq!(sorted_values, bst.into_iter().collect::<Vec<i32>>());
     }
 }
