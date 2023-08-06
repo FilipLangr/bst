@@ -22,10 +22,9 @@ pub struct BSTRefIter<'a, T: PartialOrd + PartialEq> {
 impl <'a, T: PartialOrd + PartialEq> BSTRefIter<'a, T> {
     fn new(bst: &BST<T>) -> BSTRefIter<T> {
         let mut stack = Vec::new();
-        match &bst.root {
-            None => {},
-            Some(root) => stack.push(StackRefMember::Node(root)),
-        };
+        if let Some(root) = &bst.root {
+            stack.push(StackRefMember::Node(root));
+        }
         BSTRefIter{ stack }
     }
 }
@@ -39,19 +38,13 @@ impl<'a, T: PartialOrd + PartialEq> Iterator for BSTRefIter<'a, T> {
                     return Some(value);
                 },
                 StackRefMember::Node(node) => {
-                    match &node.right {
-                        Some(right) => {
-                            self.stack.push(StackRefMember::Node(right));
-                        },
-                        None => {},
-                    };
+                    if let Some(right) = &node.right {
+                        self.stack.push(StackRefMember::Node(right));
+                    }
                     self.stack.push(StackRefMember::Visited(&node.value) );
-                    match &node.left {
-                        Some(left) => {
-                            self.stack.push(StackRefMember::Node(left));
-                        },
-                        None => {},
-                    };
+                    if let Some(left) = &node.left {
+                        self.stack.push(StackRefMember::Node(left));
+                    }
                 },
             }
         }
@@ -92,11 +85,8 @@ impl<T: PartialOrd + PartialEq> Iterator for BSTConsumingIter<T> {
                     self.stack.push(left);
                 },
                 None => {
-                    match node.right.take() {
-                        Some(right) => {
-                            self.stack.push(right);
-                        },
-                        None => {},
+                    if let Some(right) = node.right.take() {
+                        self.stack.push(right);
                     };
                     return Some(node.value);
                 },
@@ -168,7 +158,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                 None => { self.add_right(value) }
                 Some(boxed) => { boxed.insert(value) }
             }
-        } else {};
+        };
     }
     fn contains(&self, value: T) -> bool {
         if value == self.value { true } else if value < self.value {
