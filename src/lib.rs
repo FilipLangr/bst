@@ -107,7 +107,7 @@ impl<T: PartialOrd + PartialEq> BST<T> {
     }
     pub fn insert(&mut self, value: T) {
         match &mut self.root {
-            None => self.root = Some(Box::new(Node::leaf(value))),
+            None => self.root = Node::new_node(value, None, None),
             Some(root_node) => root_node.insert(value),
         };
     }
@@ -128,6 +128,13 @@ impl<T: PartialOrd + PartialEq> BST<T> {
     pub fn iter(&self) -> BSTRefIter<T> {
         self.into_iter()
     }
+
+    pub fn left_rotation_of_root(&mut self) { // TODO temp
+        if let Some(root) = self.root.take() {
+            let new_root = root.left_rotation();
+            self.root = new_root;
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -139,13 +146,13 @@ struct Node<T: PartialOrd + PartialEq> {
 
 impl<T: PartialOrd + PartialEq> Node<T> {
     fn add_left(&mut self, value: T) {
-        self.left = Some(Box::new(Node::leaf(value)))
+        self.left = Node::new_node(value, None, None)
     }
     fn add_right(&mut self, value: T) {
-        self.right = Some(Box::new(Node::leaf(value)))
+        self.right = Node::new_node(value, None, None)
     }
-    fn leaf(value: T) -> Node<T> {
-        Node { value, right: None, left: None }
+    fn new_node(value: T, left: Option<Box<Node<T>>>, right: Option<Box<Node<T>>>) -> Option<Box<Node<T>>> {
+        Some(Box::new(Node{ value: value, left: left, right: right}))
     }
     fn insert(&mut self, value: T) {
         if value < self.value {
@@ -218,6 +225,14 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                 }
             }
         }
+    }
+    fn left_rotation(mut self) -> Option<Box<Node<T>>>{
+        if let Some(mut right) = self.right.take() {
+            self.right = right.left.take();
+            right.left = Some(Box::new(self));
+            return Some(right)
+        }
+        None
     }
 }
 
@@ -384,5 +399,161 @@ mod tests {
         let sorted_values: Vec<i32> = vec![5, 11, 12, 13, 14, 15, 17, 18, 19];
         assert_eq!(sorted_values, (&bst).into_iter().map(|v| *v).collect::<Vec<i32>>());
         assert_eq!(sorted_values, bst.into_iter().collect::<Vec<i32>>());
+    }
+
+    #[test]
+    fn left_rotation_of_root() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(100);
+        bst.insert(50);
+        bst.insert(200);
+        bst.insert(25);
+        bst.insert(75);
+        bst.insert(150);
+        bst.insert(250);
+        bst.insert(120);
+        bst.insert(170);
+        bst.insert(220);
+        bst.insert(270);
+        bst.insert(210);
+        bst.insert(230);
+        bst.insert(260);
+        bst.insert(280);
+
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    100,
+                    Node::new_node(
+                        50,
+                        Node::new_node(
+                            25,
+                            None,
+                            None,
+                        ),
+                        Node::new_node(
+                            75,
+                            None,
+                            None,
+                        ),
+                    ),
+                    Node::new_node(
+                        200,
+                        Node::new_node(
+                            150,
+                            Node::new_node(
+                                120,
+                                None,
+                                None,
+                            ),
+                            Node::new_node(
+                                170,
+                                None,
+                                None,
+                            ),
+                        ),
+                        Node::new_node(
+                            250,
+                            Node::new_node(
+                                220,
+                                Node::new_node(
+                                    210,
+                                    None,
+                                    None,
+                                ),
+                                Node::new_node(
+                                    230,
+                                    None,
+                                    None,
+                                ),
+                            ),
+                            Node::new_node(
+                                270,
+                                Node::new_node(
+                                    260,
+                                    None,
+                                    None,
+                                ),
+                                Node::new_node(
+                                    280,
+                                    None,
+                                    None,
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            }
+        );
+
+        bst.left_rotation_of_root();
+
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    200,
+                    Node::new_node(
+                        100,
+                        Node::new_node(
+                            50,
+                            Node::new_node(
+                                25,
+                                None,
+                                None,
+                            ),
+                            Node::new_node(
+                                75,
+                                None,
+                                None,
+                            ),
+                        ),
+                        Node::new_node(
+                            150,
+                            Node::new_node(
+                                120,
+                                None,
+                                None,
+                            ),
+                            Node::new_node(
+                                170,
+                                None,
+                                None,
+                            ),
+                        )
+                    ),
+                    Node::new_node(
+                        250,
+                        Node::new_node(
+                            220,
+                            Node::new_node(
+                                210,
+                                None,
+                                None,
+                            ),
+                            Node::new_node(
+                                230,
+                                None,
+                                None,
+                            ),
+                        ),
+                        Node::new_node(
+                            270,
+                            Node::new_node(
+                                260,
+                                None,
+                                None,
+                            ),
+                            Node::new_node(
+                                280,
+                                None,
+                                None,
+                            ),
+                        ),
+                    )
+                )
+            }
+        );
     }
 }
