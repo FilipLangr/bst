@@ -258,16 +258,16 @@ mod tests {
     fn empty() {
         let bst = BST::new();
         assert_eq!(bst, BST { root: None });
-        assert_ne!(bst, BST { root: Some(Box::new(Node { value: 11, left: None, right: None })) });
+        assert_ne!(bst, BST { root: Node::new_node(11, None, None ) });
     }
 
     #[test]
     fn root_eq() {
         let mut bst: BST<i32> = BST::new();
         bst.insert(10);
-        assert_eq!(bst, BST { root: Some(Box::new(Node { value: 10, left: None, right: None })) });
-        assert_ne!(bst, BST { root: Some(Box::new(Node { value: 11, left: None, right: None })) });
-        assert_ne!(bst, BST { root: Some(Box::new(Node { value: 11, left: Some(Box::new(Node { value: 10, left: None, right: None })), right: None })) });
+        assert_eq!(bst, BST { root: Node::new_node(10, None, None ) });
+        assert_ne!(bst, BST { root: Node::new_node(11, None, None ) });
+        assert_ne!(bst, BST { root: Node::new_node(11, Node::new_node(10, None, None), None ) });
     }
 
     #[test]
@@ -288,24 +288,27 @@ mod tests {
         assert_eq!(
             bst,
             BST {
-                root: Some(Box::new(Node {
-                    value: 10,
-                    left: Some(Box::new(Node { value: 5, left: None, right: None })),
-                    right: Some(Box::new(Node {
-                        value: 15,
-                        left: Some(Box::new(Node {
-                            value: 12,
-                            left: Some(Box::new(Node {
-                                value: 11,
-                                left: None,
-                                right:
+                root: Node::new_node(
+                    10,
+                    Node::new_node(5, None, None),
+                    Node::new_node(
+                        15,
+                        Node::new_node(
+                            12,
+                            Node::new_node(
+                                11,
                                 None,
-                            })),
-                            right: Some(Box::new(Node { value: 13, left: None, right: None })),
-                        })),
-                        right: Some(Box::new(Node { value: 18, left: Some(Box::new(Node { value: 17, left: None, right: None })), right: Some(Box::new(Node { value: 19, left: None, right: None })) })),
-                    })),
-                }))
+                                None,
+                            ),
+                            Node::new_node(13, None, None),
+                        ),
+                        Node::new_node(
+                            18,
+                            Node::new_node(17, None, None),
+                            Node::new_node(19, None, None),
+                        ),
+                    ),
+                )
             }
         );
     }
@@ -330,27 +333,27 @@ mod tests {
         assert_eq!(
             bst,
             BST {
-                root: Some(Box::new(Node {
-                    value: 12,
-                    left: None,
-                    right: Some(Box::new(Node {
-                        value: 15,
-                        left: Some(Box::new(Node {
-                            value: 13,
-                            left: None,
-                            right: None,
-                        })),
-                        right: Some(Box::new(Node {
-                            value: 19,
-                            left: Some(Box::new(Node {
-                                value: 17,
-                                left: None,
-                                right: None,
-                            })),
-                            right: None,
-                        })),
-                    })),
-                }))
+                root: Node::new_node(
+                    12,
+                    None,
+                    Node::new_node(
+                        15,
+                        Node::new_node(
+                            13,
+                            None,
+                            None,
+                        ),
+                        Node::new_node(
+                            19,
+                            Node::new_node(
+                                17,
+                                None,
+                                None,
+                            ),
+                            None,
+                        ),
+                    ),
+                )
             }
         );
 
