@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::mem;
 
 
@@ -148,6 +149,9 @@ struct Node<T: PartialOrd + PartialEq> {
     value: T,
     left: Option<Box<Node<T>>>,
     right: Option<Box<Node<T>>>,
+    height: u32,
+    left_height: u32,
+    right_height: u32,
 }
 
 impl<T: PartialOrd + PartialEq> Node<T> {
@@ -158,7 +162,20 @@ impl<T: PartialOrd + PartialEq> Node<T> {
         self.right = Node::new_node(value, None, None)
     }
     fn new_node(value: T, left: Option<Box<Node<T>>>, right: Option<Box<Node<T>>>) -> Option<Box<Node<T>>> {
-        Some(Box::new(Node{ value: value, left: left, right: right}))
+        let mut new_node = Box::new(Node{ value: value, left: left, right: right, height: 0, left_height: 0, right_height: 0});
+        new_node.update_heights();
+        Some(new_node)
+    }
+    fn update_heights(&mut self) {
+        self.left_height = self.left.as_ref().map_or(0, |v| v.height + 1);
+        self.right_height = self.right.as_ref().map_or(0, |v| v.height + 1);
+        self.height = max(self.left_height, self.right_height);
+    }
+    fn is_left_heavy(&self) -> bool {
+        self.left_height > self.right_height
+    }
+    fn is_right_heavy(&self) -> bool {
+        self.right_height > self.left_height
     }
     fn insert(&mut self, value: T) {
         if value < self.value {
@@ -172,6 +189,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                 Some(boxed) => { boxed.insert(value) }
             }
         };
+        self.update_heights();
     }
     fn contains(&self, value: T) -> bool {
         if value == self.value { true } else if value < self.value {
@@ -192,6 +210,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
             }
             _ => {}
         };
+        self.update_heights();
     }
     fn delete_by_node(node: &mut Option<Box<Node<T>>>) {
         match node.take() {
@@ -209,6 +228,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                         }
                     };
                     new_node.left = Some(left);
+                    new_node.update_heights();
                     node.replace(new_node);
                 }
             }
@@ -218,7 +238,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
         match &mut self.left {
             None => None,
             Some(left) => {
-                match left.delete_get_leftmost() {
+                let ret_val = match left.delete_get_leftmost() {
                     None => {
                         match left.right.take() {
                             None => self.left.take(),
@@ -228,14 +248,18 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                         }
                     }
                     otherwise => otherwise,
-                }
+                };
+                self.update_heights(); // TODO our tests do not cover this one missing, fix it
+                ret_val
             }
         }
     }
     fn left_rotation(mut self) -> Option<Box<Node<T>>>{
         if let Some(mut right) = self.right.take() {
             self.right = right.left.take();
+            self.update_heights();
             right.left = Some(Box::new(self));
+            right.update_heights();
             return Some(right)
         }
         None
@@ -243,7 +267,9 @@ impl<T: PartialOrd + PartialEq> Node<T> {
     fn right_rotation(mut self) -> Option<Box<Node<T>>>{
         if let Some(mut left) = self.left.take() {
             self.left = left.right.take();
+            self.update_heights();
             left.right = Some(Box::new(self));
+            left.update_heights();
             return Some(left)
         }
         None
