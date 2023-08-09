@@ -135,6 +135,12 @@ impl<T: PartialOrd + PartialEq> BST<T> {
             self.root = new_root;
         }
     }
+    pub fn right_rotation_of_root(&mut self) { // TODO temp
+        if let Some(root) = self.root.take() {
+            let new_root = root.right_rotation();
+            self.root = new_root;
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -231,6 +237,14 @@ impl<T: PartialOrd + PartialEq> Node<T> {
             self.right = right.left.take();
             right.left = Some(Box::new(self));
             return Some(right)
+        }
+        None
+    }
+    fn right_rotation(mut self) -> Option<Box<Node<T>>>{
+        if let Some(mut left) = self.left.take() {
+            self.left = left.right.take();
+            left.right = Some(Box::new(self));
+            return Some(left)
         }
         None
     }
@@ -554,6 +568,23 @@ mod tests {
                     )
                 )
             }
+        );
+    }
+
+    #[test]
+    fn right_rotation_of_root() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(100);
+        bst.insert(50);
+        bst.insert(20);
+        assert_eq!(
+            bst,
+            BST { root: Node::new_node(100, Node::new_node(50, Node::new_node(20, None, None), None), None) }
+        );
+        bst.right_rotation_of_root();
+        assert_eq!(
+            bst,
+            BST { root: Node::new_node(50, Node::new_node(20, None, None), Node::new_node(100, None, None)) }
         );
     }
 }
