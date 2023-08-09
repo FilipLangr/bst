@@ -392,6 +392,84 @@ mod tests {
     }
 
     #[test]
+    fn delete_root() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(10);
+        bst.insert(20);
+        bst.insert(9);
+        bst.insert(8);
+        bst.insert(7);
+
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    10,
+                    Node::new_node(
+                        9,
+                        Node::new_node(
+                            8,
+                            Node::new_node(
+                                7,
+                                None,
+                                None
+                            ),
+                            None
+                        ),
+                        None,
+                    ),
+                    Node::new_node(
+                        20,
+                        None,
+                        None,
+                    ),
+                )
+            }
+        );
+        if let Some(root) = &bst.root {
+            assert_eq!(root.height, 3);
+            assert_eq!(root.right.as_ref().map_or(1000, |r| r.height), 0);
+            assert_eq!(root.left.as_ref().map_or(1000, |r| r.height), 2);
+        }
+        else {
+            assert!(false);
+        }
+
+        bst.delete(10);
+
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    20,
+                    Node::new_node(
+                        9,
+                        Node::new_node(
+                            8,
+                            Node::new_node(
+                                7,
+                                None,
+                                None
+                            ),
+                            None
+                        ),
+                        None,
+                    ),
+                    None,
+                )
+            }
+        );
+        if let Some(root) = &bst.root {
+            assert_eq!(root.height, 3);
+            assert_eq!(root.right, None);
+            assert_eq!(root.left.as_ref().map_or(1000, |r| r.height), 2);
+        }
+        else {
+            assert!(false);
+        }
+    }
+
+    #[test]
     fn contains() {
         let mut bst: BST<i32> = BST::new();
         bst.insert(10);
