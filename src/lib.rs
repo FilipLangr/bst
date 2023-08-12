@@ -107,9 +107,9 @@ impl<T: PartialOrd + PartialEq> BST<T> {
         BST { root: None }
     }
     pub fn insert(&mut self, value: T) {
-        match &mut self.root {
+        match self.root.take() {
             None => self.root = Node::new_node(value, None, None),
-            Some(root_node) => root_node.insert(value),
+            Some(root_node) => self.root = root_node.insert(value),
         };
     }
     pub fn contains(&self, value: T) -> bool {
@@ -150,8 +150,7 @@ struct Node<T: PartialOrd + PartialEq> {
     left: Option<Box<Node<T>>>,
     right: Option<Box<Node<T>>>,
     height: u32,
-    left_height: u32,
-    right_height: u32,
+    balance_factor: i32,
 }
 
 impl<T: PartialOrd + PartialEq> Node<T> {
@@ -162,34 +161,73 @@ impl<T: PartialOrd + PartialEq> Node<T> {
         self.right = Node::new_node(value, None, None)
     }
     fn new_node(value: T, left: Option<Box<Node<T>>>, right: Option<Box<Node<T>>>) -> Option<Box<Node<T>>> {
-        let mut new_node = Box::new(Node{ value: value, left: left, right: right, height: 0, left_height: 0, right_height: 0});
-        new_node.update_heights();
+        let mut new_node = Box::new(Node{ value: value, left: left, right: right, height: 0, balance_factor: 0});
+        new_node.update_height();
         Some(new_node)
     }
-    fn update_heights(&mut self) {
-        self.left_height = self.left.as_ref().map_or(0, |v| v.height + 1);
-        self.right_height = self.right.as_ref().map_or(0, |v| v.height + 1);
-        self.height = max(self.left_height, self.right_height);
+    fn update_height(&mut self) {
+        self.height = max(
+            self.left.as_ref().map_or(0, |v| v.height + 1),
+            self.right.as_ref().map_or(0, |v| v.height + 1)
+        );
+        self.balance_factor = self.get_balance_factor();
     }
-    fn is_left_heavy(&self) -> bool {
-        self.left_height > self.right_height
+    fn get_balance_factor(&self) -> i32 {
+        match (&self.left, &self.right) {
+            (None, None) => 0,
+            (None, Some(right)) => (right.height as i32) + 1,
+            (Some(left), None) => -(left.height as i32) - 1,
+            (Some(left), Some(right)) => (right.height as i32) - (left.height as i32)
+        }
     }
-    fn is_right_heavy(&self) -> bool {
-        self.right_height > self.left_height
-    }
-    fn insert(&mut self, value: T) {
+    fn insert(mut self, value: T) -> Option<Box<Node<T>>> {
         if value < self.value {
-            match &mut self.left {
+            match self.left.take() {
                 None => { self.add_left(value) }
-                Some(boxed) => { boxed.insert(value) }
+                Some(boxed) => { self.left = boxed.insert(value); }
             }
         } else if value > self.value {
-            match &mut self.right {
+            match self.right.take() {
                 None => { self.add_right(value) }
-                Some(boxed) => { boxed.insert(value) }
+                Some(boxed) => { self.right = boxed.insert(value); }
             }
         };
-        self.update_heights();
+        self.update_height();
+        self.rotate()
+    }
+    fn rotate(mut self) -> Option<Box<Node<T>>> {
+        match &self.balance_factor {
+            -2 => {
+                match self.left.take() {
+                    None => panic!("Left can't be None since balace factor is -2"),
+                    Some(left) if left.balance_factor > 0 => {
+                        self.left = left.left_rotation();
+                        self.right_rotation()
+                    },
+                    Some(left) => {
+                        self.left = Some(left);
+                        self.right_rotation()
+                    },
+                }
+            },
+            -1 => Some(Box::new(self)),
+            0 => Some(Box::new(self)),
+            1 => Some(Box::new(self)),
+            2 => {
+                match self.right.take() {
+                    None => panic!("Left can't be None since balace factor is -2"),
+                    Some(right) if right.balance_factor < 0 => {
+                        self.right = right.right_rotation();
+                        self.left_rotation()
+                    },
+                    Some(right) => {
+                        self.right = Some(right);
+                        self.left_rotation()
+                    },
+                }
+            },
+            invalid_bf => panic!("Balacne factor should be from interval [-2, 2], but is {}", invalid_bf)
+        }
     }
     fn contains(&self, value: T) -> bool {
         if value == self.value { true } else if value < self.value {
@@ -210,7 +248,8 @@ impl<T: PartialOrd + PartialEq> Node<T> {
             }
             _ => {}
         };
-        self.update_heights();
+        self.update_height();
+        // TODO rotate!
     }
     fn delete_by_node(node: &mut Option<Box<Node<T>>>) {
         match node.take() {
@@ -228,7 +267,8 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                         }
                     };
                     new_node.left = Some(left);
-                    new_node.update_heights();
+                    new_node.update_height();
+                    // TODO rotate!
                     node.replace(new_node);
                 }
             }
@@ -249,7 +289,8 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                     }
                     otherwise => otherwise,
                 };
-                self.update_heights(); // TODO our tests do not cover this one missing, fix it
+                self.update_height(); // TODO our tests do not cover this one missing, fix it
+                // TODO rotate!
                 ret_val
             }
         }
@@ -257,9 +298,9 @@ impl<T: PartialOrd + PartialEq> Node<T> {
     fn left_rotation(mut self) -> Option<Box<Node<T>>>{
         if let Some(mut right) = self.right.take() {
             self.right = right.left.take();
-            self.update_heights();
+            self.update_height();
             right.left = Some(Box::new(self));
-            right.update_heights();
+            right.update_height();
             return Some(right)
         }
         None
@@ -267,9 +308,9 @@ impl<T: PartialOrd + PartialEq> Node<T> {
     fn right_rotation(mut self) -> Option<Box<Node<T>>>{
         if let Some(mut left) = self.left.take() {
             self.left = left.right.take();
-            self.update_heights();
+            self.update_height();
             left.right = Some(Box::new(self));
-            left.update_heights();
+            left.update_height();
             return Some(left)
         }
         None
@@ -297,6 +338,79 @@ mod tests {
     }
 
     #[test]
+    fn insert_simple() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(10);
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    10,
+                    None,
+                    None,
+                )
+            }
+        );
+        bst.insert(20);
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    10,
+                    None,
+                    Node::new_node(
+                        20,
+                        None,
+                        None,
+                    ),
+                )
+            }
+        );
+        bst.insert(30);
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    20,
+                    Node::new_node(
+                        10,
+                        None,
+                        None,
+                    ),
+                    Node::new_node(
+                        30,
+                        None,
+                        None,
+                    ),
+                )
+            }
+        );
+        bst.insert(40);
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    20,
+                    Node::new_node(
+                        10,
+                        None,
+                        None,
+                    ),
+                    Node::new_node(
+                        30,
+                        None,
+                        Node::new_node(
+                            40,
+                            None,
+                            None,
+                        )
+                    ),
+                )
+            }
+        )
+    }
+
+    #[test]
     fn insert() {
         let mut bst: BST<i32> = BST::new();
         bst.insert(10);
@@ -315,18 +429,18 @@ mod tests {
             bst,
             BST {
                 root: Node::new_node(
-                    10,
-                    Node::new_node(5, None, None),
+                    12,
+                    Node::new_node(
+                        10,
+                        Node::new_node(5, None, None),
+                        Node::new_node(11, None, None),
+                    ),
                     Node::new_node(
                         15,
                         Node::new_node(
-                            12,
-                            Node::new_node(
-                                11,
-                                None,
-                                None,
-                            ),
-                            Node::new_node(13, None, None),
+                            13,
+                            None,
+                            None,
                         ),
                         Node::new_node(
                             18,
@@ -545,75 +659,6 @@ mod tests {
             bst,
             BST {
                 root: Node::new_node(
-                    100,
-                    Node::new_node(
-                        50,
-                        Node::new_node(
-                            25,
-                            None,
-                            None,
-                        ),
-                        Node::new_node(
-                            75,
-                            None,
-                            None,
-                        ),
-                    ),
-                    Node::new_node(
-                        200,
-                        Node::new_node(
-                            150,
-                            Node::new_node(
-                                120,
-                                None,
-                                None,
-                            ),
-                            Node::new_node(
-                                170,
-                                None,
-                                None,
-                            ),
-                        ),
-                        Node::new_node(
-                            250,
-                            Node::new_node(
-                                220,
-                                Node::new_node(
-                                    210,
-                                    None,
-                                    None,
-                                ),
-                                Node::new_node(
-                                    230,
-                                    None,
-                                    None,
-                                ),
-                            ),
-                            Node::new_node(
-                                270,
-                                Node::new_node(
-                                    260,
-                                    None,
-                                    None,
-                                ),
-                                Node::new_node(
-                                    280,
-                                    None,
-                                    None,
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            }
-        );
-
-        bst.left_rotation_of_root();
-
-        assert_eq!(
-            bst,
-            BST {
-                root: Node::new_node(
                     200,
                     Node::new_node(
                         100,
@@ -684,11 +729,6 @@ mod tests {
         bst.insert(100);
         bst.insert(50);
         bst.insert(20);
-        assert_eq!(
-            bst,
-            BST { root: Node::new_node(100, Node::new_node(50, Node::new_node(20, None, None), None), None) }
-        );
-        bst.right_rotation_of_root();
         assert_eq!(
             bst,
             BST { root: Node::new_node(50, Node::new_node(20, None, None), Node::new_node(100, None, None)) }
