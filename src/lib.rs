@@ -129,19 +129,6 @@ impl<T: PartialOrd + PartialEq> BST<T> {
     pub fn iter(&self) -> BSTRefIter<T> {
         self.into_iter()
     }
-
-    pub fn left_rotation_of_root(&mut self) { // TODO temp
-        if let Some(root) = self.root.take() {
-            let new_root = root.left_rotation();
-            self.root = new_root;
-        }
-    }
-    pub fn right_rotation_of_root(&mut self) { // TODO temp
-        if let Some(root) = self.root.take() {
-            let new_root = root.right_rotation();
-            self.root = new_root;
-        }
-    }
 }
 
 #[derive(Debug, PartialEq)]

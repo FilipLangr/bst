@@ -132,12 +132,4 @@ fn main() {
         println!("{:?}", item);
     }
     println!("***********************************************");
-    println!("Rotating root to the left");
-    println!("***********************************************");
-    bst.left_rotation_of_root();
-    println!("BST: {:?}", bst);
-    for item in &bst {
-        println!("{:?}", item);
-    }
-    println!("***********************************************");
 }
