@@ -116,13 +116,13 @@ impl<T: PartialOrd + PartialEq> BST<T> {
         self.root.as_ref().map_or(false, |root| root.contains(value))
     }
     pub fn delete(&mut self, value: T) {
-        match &mut self.root {
+        match self.root.take() {
             None => {}
             Some(root) if value == root.value => {
-                Node::delete_by_node(&mut self.root);
+                self.root = Node::delete_by_node( Some(root));
             }
             Some(root) => {
-                root.delete(value)
+                self.root = root.delete(value);
             }
         }
     }
@@ -186,7 +186,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
         match &self.balance_factor {
             -2 => {
                 match self.left.take() {
-                    None => panic!("Left can't be None since balace factor is -2"),
+                    None => panic!("Left can't be None since balance factor is -2"),
                     Some(left) if left.balance_factor > 0 => {
                         self.left = left.left_rotation();
                         self.right_rotation()
@@ -202,7 +202,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
             1 => Some(Box::new(self)),
             2 => {
                 match self.right.take() {
-                    None => panic!("Left can't be None since balace factor is -2"),
+                    None => panic!("Right can't be None since balance factor is 2"),
                     Some(right) if right.balance_factor < 0 => {
                         self.right = right.right_rotation();
                         self.left_rotation()
@@ -213,7 +213,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                     },
                 }
             },
-            invalid_bf => panic!("Balacne factor should be from interval [-2, 2], but is {}", invalid_bf)
+            invalid_bf => panic!("Balance factor should be from interval [-2, 2], but is {}", invalid_bf)
         }
     }
     fn contains(&self, value: T) -> bool {
@@ -223,40 +223,50 @@ impl<T: PartialOrd + PartialEq> Node<T> {
             self.right.as_ref().map_or(false, |right| right.contains(value))
         }
     }
-    fn delete(&mut self, value: T) {
-        match (&mut self.left, &mut self.right) {
-            (_, Some(right)) if value == right.value => Node::delete_by_node(&mut self.right),
-            (Some(left), _) if value == left.value => Node::delete_by_node(&mut self.left),
-            (Some(left), _) if value < self.value => {
-                left.delete(value)
+    fn delete(mut self, value: T) -> Option<Box<Node<T>>> {
+        match (self.left.take(), self.right.take()) {
+            (left, Some(right)) if value == right.value => {
+                self.left = left;
+                self.right = Node::delete_by_node( Some(right));
+            },
+            (Some(left), right) if value == left.value => {
+                self.right = right;
+                self.left = Node::delete_by_node(Some(left));
+            },
+            (Some(left), right) if value < self.value => {
+                self.right = right;
+                self.left = left.delete(value)
             }
-            (_, Some(right)) if value > self.value => {
-                right.delete(value)
+            (left, Some(right)) if value > self.value => {
+                self.left = left;
+                self.right = right.delete(value)
             }
             _ => {}
         };
         self.update_height();
-        // TODO rotate!
+        self.rotate()
     }
-    fn delete_by_node(node: &mut Option<Box<Node<T>>>) {
+    fn delete_by_node(mut node: Option<Box<Node<T>>>) -> Option<Box<Node<T>>>{
         match node.take() {
-            None => { return; }
+            None => None,
             Some(to_delete) => match (to_delete.left, to_delete.right) {
-                (None, None) => { node.take(); }
-                (None, Some(right)) => { node.replace(right); }
-                (Some(left), None) => { node.replace(left); }
-                (Some(left), Some(mut right)) => {
-                    let mut new_node = match right.delete_get_leftmost() {
-                        None => right,
+                (None, None) => None,
+                (None, right) => right,
+                (left, None) => left,
+                (left, Some(mut right)) => {
+                    match right.delete_get_leftmost() {
+                        None => {
+                            right.left = left;
+                            right.update_height();
+                            right.rotate()
+                        }
                         Some(mut new_node) => {
                             new_node.right = Some(right);
-                            new_node
+                            new_node.left = left;
+                            new_node.update_height();
+                            new_node.rotate()
                         }
-                    };
-                    new_node.left = Some(left);
-                    new_node.update_height();
-                    // TODO rotate!
-                    node.replace(new_node);
+                    }
                 }
             }
         }
@@ -276,9 +286,10 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                     }
                     otherwise => otherwise,
                 };
-                self.update_height(); // TODO our tests do not cover this one missing, fix it
-                // TODO rotate!
-                ret_val
+                ret_val.and_then(|mut _n| {
+                    _n.update_height(); // TODO our tests do not cover this one missing, fix it
+                    _n.rotate()
+                })
             }
         }
     }
@@ -457,28 +468,28 @@ mod tests {
         bst.delete(11);
         bst.delete(5);
         bst.delete(18);
-        assert_eq!(
+            assert_eq!(
             bst,
             BST {
                 root: Node::new_node(
-                    12,
-                    None,
+                    15,
                     Node::new_node(
-                        15,
+                        12,
+                        None,
                         Node::new_node(
                             13,
                             None,
                             None,
                         ),
+                    ),
+                    Node::new_node(
+                        19,
                         Node::new_node(
-                            19,
-                            Node::new_node(
-                                17,
-                                None,
-                                None,
-                            ),
+                            17,
+                            None,
                             None,
                         ),
+                        None,
                     ),
                 )
             }
@@ -507,17 +518,17 @@ mod tests {
                 root: Node::new_node(
                     10,
                     Node::new_node(
-                        9,
+                        8,
                         Node::new_node(
-                            8,
-                            Node::new_node(
-                                7,
-                                None,
-                                None
-                            ),
+                            7,
+                            None,
                             None
                         ),
-                        None,
+                        Node::new_node(
+                            9,
+                            None,
+                            None
+                        ),
                     ),
                     Node::new_node(
                         20,
@@ -527,14 +538,17 @@ mod tests {
                 )
             }
         );
-        if let Some(root) = &bst.root {
-            assert_eq!(root.height, 3);
-            assert_eq!(root.right.as_ref().map_or(1000, |r| r.height), 0);
-            assert_eq!(root.left.as_ref().map_or(1000, |r| r.height), 2);
-        }
-        else {
-            assert!(false);
-        }
+
+        assert_eq!(bst.root.as_ref().unwrap().height, 2);
+        assert_eq!(bst.root.as_ref().unwrap().balance_factor, -1);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().height, 1);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().balance_factor, 0);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().left.as_ref().unwrap().height, 0);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().left.as_ref().unwrap().balance_factor, 0);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().right.as_ref().unwrap().height, 0);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().right.as_ref().unwrap().balance_factor, 0);
+        assert_eq!(bst.root.as_ref().unwrap().right.as_ref().unwrap().height, 0);
+        assert_eq!(bst.root.as_ref().unwrap().right.as_ref().unwrap().balance_factor, 0);
 
         bst.delete(10);
 
@@ -542,32 +556,47 @@ mod tests {
             bst,
             BST {
                 root: Node::new_node(
-                    20,
+                    8,
                     Node::new_node(
-                        9,
-                        Node::new_node(
-                            8,
-                            Node::new_node(
-                                7,
-                                None,
-                                None
-                            ),
-                            None
-                        ),
+                        7,
+                        None,
                         None,
                     ),
-                    None,
+                    Node::new_node(
+                        20,
+                        Node::new_node(
+                            9,
+                            None,
+                            None
+                        ),
+                        None
+                    ),
                 )
             }
         );
-        if let Some(root) = &bst.root {
-            assert_eq!(root.height, 3);
-            assert_eq!(root.right, None);
-            assert_eq!(root.left.as_ref().map_or(1000, |r| r.height), 2);
-        }
-        else {
-            assert!(false);
-        }
+
+        assert_eq!(bst.root.as_ref().unwrap().height, 2);
+        assert_eq!(bst.root.as_ref().unwrap().balance_factor, 1);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().height, 0);
+        assert_eq!(bst.root.as_ref().unwrap().left.as_ref().unwrap().balance_factor, 0);
+        assert_eq!(bst.root.as_ref().unwrap().right.as_ref().unwrap().height, 1);
+        assert_eq!(bst.root.as_ref().unwrap().right.as_ref().unwrap().balance_factor, -1);
+        assert_eq!(bst.root.as_ref().unwrap().right.as_ref().unwrap().left.as_ref().unwrap().height, 0);
+        assert_eq!(bst.root.as_ref().unwrap().right.as_ref().unwrap().left.as_ref().unwrap().balance_factor, 0);
+    }
+
+    #[test]
+    fn contains_simple() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(10);
+        bst.insert(5);
+        bst.insert(10);
+        bst.insert(7);
+
+        assert!(bst.contains(10));
+        assert!(bst.contains(5));
+        assert!(bst.contains(7));
+        assert!(!bst.contains(1313));
     }
 
     #[test]
@@ -721,4 +750,5 @@ mod tests {
             BST { root: Node::new_node(50, Node::new_node(20, None, None), Node::new_node(100, None, None)) }
         );
     }
+
 }
