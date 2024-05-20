@@ -286,8 +286,9 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                     }
                     otherwise => otherwise,
                 };
+                // TODO unclear if necessary, tests pass without this code, returning ret_val instead:
                 ret_val.and_then(|mut _n| {
-                    _n.update_height(); // TODO our tests do not cover this one missing, fix it
+                    _n.update_height();
                     _n.rotate()
                 })
             }
@@ -748,6 +749,51 @@ mod tests {
         assert_eq!(
             bst,
             BST { root: Node::new_node(50, Node::new_node(20, None, None), Node::new_node(100, None, None)) }
+        );
+    }
+
+    #[test]
+    fn rotate_in_get_leftmost() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(3);
+        bst.insert(1);
+        bst.insert(5);
+        bst.insert(2);
+        bst.insert(4);
+        bst.insert(6);
+        bst.insert(7);
+
+        bst.delete(1);
+
+        assert_eq!(
+            bst,
+            BST {
+                root: Node::new_node(
+                    5,
+                    Node::new_node(
+                        3,
+                        Node::new_node(
+                            2,
+                            None,
+                            None,
+                        ),
+                        Node::new_node(
+                            4,
+                            None,
+                            None,
+                        ),
+                    ),
+                    Node::new_node(
+                        6,
+                        None,
+                        Node::new_node(
+                            7,
+                            None,
+                            None,
+                        ),
+                    )
+                )
+            }
         );
     }
 
