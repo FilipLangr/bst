@@ -288,7 +288,6 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                     }
                     otherwise => otherwise,
                 };
-                // TODO unclear if necessary, tests pass without this code, returning ret_val instead:
                 ret_val.and_then(|mut _n| {
                     _n.update_height();
                     _n.rotate()
