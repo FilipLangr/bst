@@ -261,7 +261,9 @@ impl<T: PartialOrd + PartialEq> Node<T> {
                             right.rotate()
                         }
                         Some(mut new_node) => {
-                            new_node.right = Some(right);
+                            right.update_height();
+                            let right = right.rotate();
+                            new_node.right = right;
                             new_node.left = left;
                             new_node.update_height();
                             new_node.rotate()
@@ -795,6 +797,111 @@ mod tests {
                 )
             }
         );
+    }
+
+    #[test]
+    fn test_rotation_of_right_in_delete_by_node() {
+        let mut bst: BST<i32> = BST::new();
+        bst.insert(5);
+        bst.insert(3);
+        bst.insert(7);
+        bst.insert(6);
+        bst.insert(2);
+        bst.insert(4);
+        bst.insert(9);
+        bst.insert(8);
+        bst.insert(10);
+        bst.insert(1);
+
+        assert_eq!(
+            bst,
+            BST {root: Node::new_node(
+                5,
+                Node::new_node(
+                    3,
+                    Node::new_node(
+                        2,
+                        Node::new_node(
+                            1,
+                            None,
+                            None
+                        ),
+                        None
+                    ),
+                    Node::new_node(
+                        4,
+                        None,
+                        None
+                    ),
+                ),
+                Node::new_node(
+                    7,
+                    Node::new_node(
+                        6,
+                        None,
+                        None
+                    ),
+                    Node::new_node(
+                        9,
+                        Node::new_node(
+                            8,
+                            None,
+                            None
+                        ),
+                        Node::new_node(
+                            10,
+                            None,
+                            None
+                        )
+                    )
+                )
+            )}
+        );
+
+        bst.delete(5);
+
+        assert_eq!(
+            bst,
+            BST {root: Node::new_node(
+                6,
+                Node::new_node(
+                    3,
+                    Node::new_node(
+                        2,
+                        Node::new_node(
+                            1,
+                            None,
+                            None
+                        ),
+                        None
+                    ),
+                    Node::new_node(
+                        4,
+                        None,
+                        None
+                    ),
+                ),
+                Node::new_node(
+                    9,
+                    Node::new_node(
+                        7,
+                        None,
+                        Node::new_node(
+                            8,
+                            None,
+                            None
+                        )
+                    ),
+                    Node::new_node(
+                        10,
+                        None,
+                        None
+                    )
+                )
+            )}
+        );
+
+
     }
 
 }
