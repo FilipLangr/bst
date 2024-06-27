@@ -102,6 +102,13 @@ pub struct BST<T: PartialOrd + PartialEq> {
     root: Option<Box<Node<T>>>,
 }
 
+impl<T: PartialOrd + PartialEq> Default for BST<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+
 impl<T: PartialOrd + PartialEq> BST<T> {
     pub fn new() -> BST<T> {
         BST { root: None }
