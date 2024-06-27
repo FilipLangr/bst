@@ -1,6 +1,5 @@
 use bst::BST;
 
-
 fn main() {
     let mut bst: BST<i32> = BST::new();
     println!("BST: {:?}", bst);
@@ -109,4 +108,27 @@ fn main() {
     for item in bst {
         println!("{:?}", item);
     }
+
+    let mut bst: BST<i32> = BST::new();
+    bst.insert(25);
+    bst.insert(50);
+    bst.insert(75);
+    bst.insert(100);
+    bst.insert(120);
+    bst.insert(150);
+    bst.insert(170);
+    bst.insert(200);
+    bst.insert(210);
+    bst.insert(220);
+    bst.insert(230);
+    bst.insert(250);
+    bst.insert(260);
+    bst.insert(270);
+    bst.insert(280);
+    println!("***********************************************");
+    println!("BST: {:?}", bst);
+    for item in &bst {
+        println!("{:?}", item);
+    }
+    println!("***********************************************");
 }
