@@ -1,6 +1,5 @@
 use bst::BST;
 
-
 fn main() {
     let mut bst: BST<i32> = BST::new();
     println!("BST: {:?}", bst);
