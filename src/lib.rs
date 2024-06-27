@@ -12,7 +12,7 @@ impl<'a, T: PartialOrd + PartialEq> IntoIterator for &'a BST<T> {
 }
 
 enum StackRefMember<'a, T: PartialOrd + PartialEq> {
-    Node(&'a Box<Node<T>>),
+    Node(&'a Node<T>),
     Visited(&'a T),
 }
 
