@@ -155,7 +155,7 @@ impl<T: PartialOrd + PartialEq> Node<T> {
         self.right = Node::new_node(value, None, None)
     }
     fn new_node(value: T, left: Option<Box<Node<T>>>, right: Option<Box<Node<T>>>) -> Option<Box<Node<T>>> {
-        let mut new_node = Box::new(Node{ value: value, left: left, right: right, height: 0, balance_factor: 0});
+        let mut new_node = Box::new(Node{ value, left, right, height: 0, balance_factor: 0});
         new_node.update_height();
         Some(new_node)
     }
